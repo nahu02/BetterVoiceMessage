@@ -1,10 +1,9 @@
-import 'package:better_voide_message/settings/settings_screen.dart';
+import 'package:better_voice_message/settings/settings_model.dart';
+import 'package:better_voice_message/settings/settings_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:settings_provider/settings_provider.dart';
 import 'package:speech_to_text/speech_recognition_result.dart';
 import 'package:speech_to_text/speech_to_text.dart';
-
-import 'settings/settings_model.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
