@@ -1,6 +1,10 @@
+import 'package:better_voice_message/llm/available_models.dart';
+import 'package:better_voice_message/llm/available_providers.dart';
+import 'package:better_voice_message/llm/perplexity_provider.dart';
 import 'package:better_voice_message/settings/settings_model.dart';
 import 'package:better_voice_message/settings/settings_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_ai_toolkit/flutter_ai_toolkit.dart';
 import 'package:settings_provider/settings_provider.dart';
 import 'package:speech_to_text/speech_recognition_result.dart';
 import 'package:speech_to_text/speech_to_text.dart';
@@ -78,12 +82,15 @@ class _MyHomePageState extends State<MyHomePage> {
   bool _speechEnabled = false;
   String _lastWords = '';
   String _localeId = '';
+  late LlmProvider _llmProvider;
+  String _lastAssistantResponse = '';
 
   @override
   void initState() {
     super.initState();
     _initSpeech();
     _loadLocale();
+    _loadLlmProvider();
   }
 
   /// This has to happen only once per app
@@ -92,15 +99,52 @@ class _MyHomePageState extends State<MyHomePage> {
     setState(() {});
   }
 
+  T _getSetting<T>(BaseProperty<T> property) {
+    return Settings.from<MainSettings>(context).get(property);
+  }
+
+  T _listenSetting<T>(BaseProperty<T> property) {
+    return Settings.listenFrom<MainSettings>(context).get(property);
+  }
+
   void _loadLocale() async {
     setState(() {
-      _localeId = Settings.from<MainSettings>(context).get(MainSettings.locale);
+      _localeId = _getSetting(MainSettings.locale);
     });
   }
 
+  void _loadLlmProvider() {
+    AvailableProviders provider = _getSetting(MainSettings.aiProvider);
+    String apiKey = _getSetting(MainSettings.apiKey);
+    AvailableModels model = _getSetting(MainSettings.model);
+
+    String systemInstruction = '''
+    You are a system that helps users turn their voice messages into text.
+    Your input is a transcription of a voice message.
+    Your task is to generate a text message that would be the equivalent text message of the voice message.
+    Your tone respects the tone of the voice message.
+    You are aware you may not have all the information needed to generate a perfect text message, but this does not mean you should add any information that is not present in the voice message.
+    You MUST NOT add any information that is not present in the voice message.
+    Your output should be a text message that contains proper punctuation and grammar, cuts out stuttering, and is generally well-formed.
+    Your output should be a text message that is a good representation of the voice message, and nothing more.
+    ''';
+
+    switch (provider) {
+      case AvailableProviders.perplexity:
+        setState(() {
+          _llmProvider = PerplexityProvider(
+            apiKey: apiKey,
+            model: model,
+            systemInstruction: systemInstruction,
+          );
+        });
+      // If more providers are implemented, add them here
+      // All AvailableProviders must be handled here
+    }
+  }
+
   void _listenToLocale() {
-    _localeId =
-        Settings.listenFrom<MainSettings>(context).get(MainSettings.locale);
+    _localeId = _listenSetting(MainSettings.locale);
   }
 
   @override
@@ -119,10 +163,8 @@ class _MyHomePageState extends State<MyHomePage> {
     setState(() {});
   }
 
-  /// Manually stop the active speech recognition session
-  /// Note that there are also timeouts that each platform enforces
-  /// and the SpeechToText plugin supports setting timeouts on the
-  /// listen method.
+  /// Manually stop the active speech recognition session.
+  /// This is not called when the user stops speaking and the SpeechToText stops automatically.
   void _stopListening() async {
     await _speechToText.stop();
     setState(() {});
@@ -133,6 +175,22 @@ class _MyHomePageState extends State<MyHomePage> {
   void _onSpeechResult(SpeechRecognitionResult result) {
     setState(() {
       _lastWords = result.recognizedWords;
+      if (result.finalResult && result.recognizedWords.isNotEmpty) {
+        _lastAssistantResponse = '';
+        _callLLM(result.recognizedWords);
+      }
+    });
+  }
+
+  void _callLLM(String recognizedWords) {
+    _llmProvider.generateStream(recognizedWords).listen((response) {
+      setState(() {
+        _lastAssistantResponse += response;
+      });
+    }, onError: (error) {
+      setState(() {
+        _lastAssistantResponse = 'Error: $error';
+      });
     });
   }
 
@@ -158,7 +216,7 @@ class _MyHomePageState extends State<MyHomePage> {
               padding: EdgeInsets.all(16),
               child: Text(
                 'Recognized words:',
-                style: TextStyle(fontSize: 20.0),
+                style: Theme.of(context).textTheme.headlineSmall,
               ),
             ),
             Expanded(
@@ -173,6 +231,21 @@ class _MyHomePageState extends State<MyHomePage> {
                               ? 'Tap the microphone to start listening...'
                               : _lastWords
                           : 'Speech not available',
+                ),
+              ),
+            ),
+            Container(
+              padding: EdgeInsets.all(16),
+              child: Text(
+                'Assistant response:',
+                style: Theme.of(context).textTheme.headlineSmall,
+              ),
+            ),
+            Expanded(
+              child: Container(
+                padding: EdgeInsets.all(16),
+                child: Text(
+                  _lastAssistantResponse,
                 ),
               ),
             ),
