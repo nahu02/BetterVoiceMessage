@@ -124,7 +124,7 @@ YOU ARE A HIGHLY ACCURATE AND EFFICIENT SYSTEM DESIGNED TO CONVERT VOICE MESSAGE
 ###TASK GUIDELINES###
 
 - YOUR INPUT: A transcription of a voice message.
-- YOUR OUTPUT: A grammatically correct, properly punctuated, and well-formed text message that accurately reflects the content and tone of the voice message.
+- YOUR OUTPUT: A grammatically correct, properly punctuated, and well-formed text message, WRAPPED IN `<polished-text></polished-text>` TAGS, that accurately reflects the content and tone of the voice message.
 
 ###SPECIFIC INSTRUCTIONS###
 
@@ -145,9 +145,9 @@ YOU ARE A HIGHLY ACCURATE AND EFFICIENT SYSTEM DESIGNED TO CONVERT VOICE MESSAGE
    - DO NOT infer, assume, or speculate on missing details.
    - STRICTLY LIMIT output to the information provided in the transcription.
 
-5. **OUTPUT CLARITY**:
-   - RETURN ONLY the final polished text message, free of any additional commentary, explanation, or formatting metadata.
-   - DO NOT include labels, such as “Constructed text message,” or descriptions of your process.
+5. **USE TAGGED OUTPUT**:
+   - RETURN THE FINAL POLISHED TEXT MESSAGE WRAPPED IN `<polished-text></polished-text>` TAGS.
+   - USE ADDITIONAL XML-LIKE TAGS (e.g., `<step>`, `<correction>`) TO GUIDE THE CHAIN OF THOUGHT, BUT DO NOT INCLUDE THESE IN THE FINAL POLISHED MESSAGE.
 
 ###WHAT NOT TO DO###
 
@@ -155,37 +155,53 @@ YOU ARE A HIGHLY ACCURATE AND EFFICIENT SYSTEM DESIGNED TO CONVERT VOICE MESSAGE
 - **NEVER** ALTER the tone inappropriately (e.g., making a formal message sound casual).
 - **NEVER** RETAIN filler words, stutters, or irrelevant noise unless they carry meaningful context.
 - **NEVER** OMIT any substantive part of the voice message.
-- **NEVER** INCLUDE commentary, metadata, or explanations in the output.
+- **NEVER** INCLUDE commentary, metadata, or explanations outside the XML-like tags.
 
 ###CHAIN OF THOUGHT###
 
-FOLLOW THIS STEP-BY-STEP PROCESS TO PRODUCE AN OPTIMAL OUTPUT:
+FOLLOW THIS STEP-BY-STEP PROCESS USING XML-LIKE TAGS TO PRODUCE AN OPTIMAL OUTPUT:
 
-1. **UNDERSTAND**: READ the transcription carefully to grasp the full meaning, tone, and context of the message.
-2. **CLEANSE**: IDENTIFY and REMOVE stuttering, filler words, or transcription errors that do not add meaning.
-3. **CORRECT**: FIX the misrecognized words where the context suggests a clear alternative.
-4. **STRUCTURE**: RECONSTRUCT the message into clear, concise, and grammatically correct sentences.
-5. **VERIFY**: COMPARE the polished text against the transcription to ensure accuracy and fidelity.
-6. **FINALIZE**: CONFIRM the tone and style match the original voice message and present the polished text.
+1. **UNDERSTAND**: WRAP your understanding of the transcription in `<understand>` tags. Summarize the intended meaning, tone, and context of the message.
+2. **CLEANSE**: USE `<cleanse>` tags to document removal of stuttering, filler words, or transcription errors that do not add meaning.
+3. **CORRECT**: USE `<correction>` tags to note fixes to misrecognized words or phrases.
+4. **STRUCTURE**: USE `<structure>` tags to reconstruct the message into clear, concise, and grammatically correct sentences.
+5. **VERIFY**: USE `<verify>` tags to compare the polished text against the transcription to ensure accuracy and fidelity.
+6. **FINALIZE**: RETURN THE POLISHED TEXT MESSAGE WRAPPED IN `<polished-text>` TAGS.
 
 ###OUTPUT FORMAT###
 
-- RETURN ONLY the final polished text message, with no additional explanations or annotations.
-- DO NOT include labels, such as “Constructed text message,” or descriptions of your process.
+- RETURN THE FINAL POLISHED TEXT MESSAGE WRAPPED IN `<polished-text></polished-text>` TAGS.
+- ANY CHAIN OF THOUGHT STEPS (SUCH AS `<understand>`, `<cleanse>`, `<correction>`) MAY BE INCLUDED IN THE RESPONSE FOR REASONING BUT MUST NOT BE INCLUDED IN `<polished-text>`.
 
 ###EXAMPLE###
 
 **Input**: 
-"Transcribtion of a voice recording with some word potentially misrecognized:\n\nuh hey uh can you like call me back uh i was just wandering if your free tomorrow um for lunch or something let me know"
+"<transcription>
+uh hey uh can you like call me back uh i was just wandering if your free tomorrow um for lunch or something let me know
+</transcription>"
 
 **Output**: 
-"Hey, can you call me back? I was wondering if you’re free for lunch tomorrow. Let me know!"
-
-**Notice the following about this example**:
-- Only the final polished text message was returned, with no other commentary or labels.
-- The misrecognised word "wandering" was corrected to "wondering."
-- Filler words like "uh" and "like" were omitted.
-- Grammar was cleaned up, and proper punctuation was applied.
+<understand>
+The message is an informal request for a callback and an inquiry about availability for lunch tomorrow.
+</understand>
+<cleanse>
+Clensing the final message. Filler words like "uh," "like," and "um." must be removed. The phrase "or something" is irrelevant and should be omitted.
+</cleanse>
+<correction>
+Checking for misheard words. "Wandering" needs to be corrected to "wondering" and "your" to "you're."
+</correction>
+<structure>
+The message must be restructured into concise, grammatically correct sentences.
+</structure>
+<verify>
+The polished text must match the tone and intent of the transcription while being free of errors and irrelevant noise.
+</verify>
+<polished-text>
+Hey, can you call me back? I was wondering if you’re free for lunch tomorrow. Let me know!
+</polished-text>
+<additional-info>
+The message is casual and friendly, with a clear request for a callback and a lunch invitation.
+</additional-info>
     ''';
 
     switch (provider) {
@@ -242,8 +258,7 @@ FOLLOW THIS STEP-BY-STEP PROCESS TO PRODUCE AN OPTIMAL OUTPUT:
   }
 
   void _callLLM(String recognizedWords) {
-    String prompt =
-        "Transcribtion of a voice recording with some word potentially misrecognized:\n\n$recognizedWords";
+    String prompt = "<transcription>\n$recognizedWords\n</transcription>";
 
     _llmProvider.generateStream(prompt).listen((response) {
       setState(() {
@@ -253,7 +268,22 @@ FOLLOW THIS STEP-BY-STEP PROCESS TO PRODUCE AN OPTIMAL OUTPUT:
       setState(() {
         _lastAssistantResponse = 'Error: $error';
       });
+    }, onDone: () {
+      setState(() {
+        print('Raw assistant response: $_lastAssistantResponse');
+        _lastAssistantResponse = _extractPolishedText(_lastAssistantResponse);
+      });
     });
+  }
+
+  String _extractPolishedText(String assistantResponse) {
+    RegExp polishedTextRegex =
+        RegExp(r'<polished-text>([\s\S]*?)</polished-text>');
+    Match? match = polishedTextRegex.firstMatch(assistantResponse);
+    if (match == null) {
+      print("Error: <polished-text> not found in assistant response");
+    }
+    return match?.group(1) ?? assistantResponse;
   }
 
   @override
@@ -286,14 +316,14 @@ FOLLOW THIS STEP-BY-STEP PROCESS TO PRODUCE AN OPTIMAL OUTPUT:
                 padding: EdgeInsets.all(16),
                 child: SingleChildScrollView(
                   child: SelectableText(
-                  // If listening is active show 'Listening...', otherwise show the last recognized words / error message
-                  _speechToText.isListening
-                      ? 'Listening...'
-                      : _speechEnabled
-                          ? _lastWords.isEmpty
-                              ? 'Tap the microphone to start listening...'
-                              : _lastWords
-                          : 'Speech not available',
+                    // If listening is active show 'Listening...', otherwise show the last recognized words / error message
+                    _speechToText.isListening
+                        ? 'Listening...'
+                        : _speechEnabled
+                            ? _lastWords.isEmpty
+                                ? 'Tap the microphone to start listening...'
+                                : _lastWords
+                            : 'Speech not available',
                   ),
                 ),
               ),
@@ -310,7 +340,7 @@ FOLLOW THIS STEP-BY-STEP PROCESS TO PRODUCE AN OPTIMAL OUTPUT:
                 padding: EdgeInsets.all(16),
                 child: SingleChildScrollView(
                   child: SelectableText(
-                  _lastAssistantResponse,
+                    _lastAssistantResponse,
                   ),
                 ),
               ),
