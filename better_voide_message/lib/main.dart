@@ -284,7 +284,8 @@ FOLLOW THIS STEP-BY-STEP PROCESS TO PRODUCE AN OPTIMAL OUTPUT:
             Expanded(
               child: Container(
                 padding: EdgeInsets.all(16),
-                child: Text(
+                child: SingleChildScrollView(
+                  child: SelectableText(
                   // If listening is active show 'Listening...', otherwise show the last recognized words / error message
                   _speechToText.isListening
                       ? 'Listening...'
@@ -293,6 +294,7 @@ FOLLOW THIS STEP-BY-STEP PROCESS TO PRODUCE AN OPTIMAL OUTPUT:
                               ? 'Tap the microphone to start listening...'
                               : _lastWords
                           : 'Speech not available',
+                  ),
                 ),
               ),
             ),
@@ -306,8 +308,10 @@ FOLLOW THIS STEP-BY-STEP PROCESS TO PRODUCE AN OPTIMAL OUTPUT:
             Expanded(
               child: Container(
                 padding: EdgeInsets.all(16),
-                child: Text(
+                child: SingleChildScrollView(
+                  child: SelectableText(
                   _lastAssistantResponse,
+                  ),
                 ),
               ),
             ),
