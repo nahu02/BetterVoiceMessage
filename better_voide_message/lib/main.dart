@@ -80,7 +80,7 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   final SpeechToText _speechToText = SpeechToText();
   bool _speechEnabled = false;
-  String _lastWords = '';
+  String _lastTranscription = '';
   String _localeId = '';
   late LlmProvider _llmProvider;
   String _lastAssistantResponse = '';
@@ -234,6 +234,9 @@ The message is casual and friendly, with a clear request for a callback and a lu
     await _speechToText.listen(
       onResult: _onSpeechResult,
       localeId: _localeId,
+      listenOptions: SpeechListenOptions(
+        listenMode: ListenMode.dictation,
+      ),
     );
     setState(() {});
   }
@@ -249,7 +252,7 @@ The message is casual and friendly, with a clear request for a callback and a lu
   /// the platform returns recognized words.
   void _onSpeechResult(SpeechRecognitionResult result) {
     setState(() {
-      _lastWords = result.recognizedWords;
+      _lastTranscription = result.recognizedWords;
       if (result.finalResult && result.recognizedWords.isNotEmpty) {
         _lastAssistantResponse = '';
         _callLLM(result.recognizedWords);
@@ -286,6 +289,12 @@ The message is casual and friendly, with a clear request for a callback and a lu
     return match?.group(1) ?? assistantResponse;
   }
 
+  void _reset() {
+    _loadLlmProvider();
+    _lastTranscription = '';
+    _lastAssistantResponse = '';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -320,9 +329,9 @@ The message is casual and friendly, with a clear request for a callback and a lu
                     _speechToText.isListening
                         ? 'Listening...'
                         : _speechEnabled
-                            ? _lastWords.isEmpty
+                            ? _lastTranscription.isEmpty
                                 ? 'Tap the microphone to start listening...'
-                                : _lastWords
+                                : _lastTranscription
                             : 'Speech not available',
                   ),
                 ),
@@ -348,12 +357,39 @@ The message is casual and friendly, with a clear request for a callback and a lu
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed:
-            // If not yet listening for speech start, otherwise stop
-            _speechToText.isNotListening ? _startListening : _stopListening,
-        tooltip: 'Listen',
-        child: Icon(_speechToText.isNotListening ? Icons.mic_off : Icons.mic),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      floatingActionButton: Stack(
+        children: [
+          Align(
+            alignment: Alignment.bottomRight,
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: FloatingActionButton(
+                heroTag: null,
+                onPressed: _speechToText.isNotListening
+                    ? _startListening
+                    : _stopListening,
+                tooltip: 'Listen',
+                child: Icon(
+                    _speechToText.isNotListening ? Icons.mic_off : Icons.mic),
+              ),
+            ),
+          ),
+          Align(
+            alignment: Alignment.bottomLeft,
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: FloatingActionButton(
+                heroTag: null,
+                onPressed: () {
+                  _reset();
+                },
+                tooltip: 'New Message',
+                child: Icon(Icons.refresh),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
