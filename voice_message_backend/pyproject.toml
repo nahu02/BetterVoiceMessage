@@ -7,8 +7,11 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.13"
-fastapi = "^0.115.7"
-uvicorn = "^0.34.0"
+ell-ai = {extras = ["all"], version = "^0.0.15"}
+fastapi = "^0.111.1"
+uvicorn = "^0.30.3"
+openai = "^1.60.1"
+python-dotenv = "^1.0.1"
 
 
 [build-system]
@@ -18,3 +21,4 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
 start = "voice_message_backend.main:main"
+dev = "voice_message_backend.main:run_dev"

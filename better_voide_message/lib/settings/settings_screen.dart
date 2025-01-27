@@ -1,5 +1,3 @@
-import 'package:better_voice_message/llm/available_models.dart';
-import 'package:better_voice_message/llm/available_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:settings_provider/settings_provider.dart';
 import 'package:settings_ui/settings_ui.dart';
@@ -53,82 +51,28 @@ class SettingsScreenState extends State<SettingsScreen> {
             ],
           ),
           SettingsSection(
-            title: Text('AI Settings'),
+            title: Text("Backend"),
             tiles: [
               SettingsTile(
-                title: Text('AI Provider'),
+                title: Text('Endpoint'),
                 leading: Icon(Icons.cloud),
-                trailing: DropdownButton<String>(
-                  value: _getSetting(context, MainSettings.aiProvider),
-                  onChanged: (String? newValue) {
-                    if (newValue != null) {
-                      _setEnumSetting<AvailableProviders>(
-                        context,
-                        MainSettings.aiProvider,
-                        AvailableProviders.values
-                            .firstWhere((e) => e.toString() == newValue),
-                      );
-                    }
-                  },
-                  items: AvailableProviders.values
-                      .map((AvailableProviders provider) {
-                    return DropdownMenuItem(
-                      value: provider.toString(),
-                      child: Text(provider.toString()),
-                    );
-                  }).toList(),
-                ),
-              ),
-              SettingsTile(
-                title: Text('API Key'),
-                leading: Icon(Icons.vpn_key),
                 trailing: IconButton(
                   icon: Icon(Icons.edit),
                   onPressed: () {
                     _showEditDialog(
                       context,
-                      'Enter API Key',
-                      defaultValue: _getSetting(context, MainSettings.apiKey),
+                      'Backend URL',
+                      defaultValue:
+                          _getSetting(context, MainSettings.backendEndpoint),
                     ).then((newValue) {
                       if (newValue != null && newValue.isNotEmpty) {
                         setState(() {
-                          _setSetting(context, MainSettings.apiKey, newValue);
+                          _setSetting(
+                              context, MainSettings.backendEndpoint, newValue);
                         });
                       }
                     });
                   },
-                ),
-              ),
-              SettingsTile(
-                title: Text('Model'),
-                leading: Icon(Icons.model_training),
-                trailing: SizedBox(
-                  width: 200,
-                  child: DropdownButton<String>(
-                    value: _getSetting(context, MainSettings.model),
-                    isExpanded: true,
-                    menuWidth: 300,
-                    onChanged: (String? newValue) {
-                      if (newValue != null) {
-                        _setEnumSetting<AvailableModels>(
-                          context,
-                          MainSettings.model,
-                          AvailableModels.values
-                              .firstWhere((e) => e.toString() == newValue),
-                        );
-                      }
-                    },
-                    items: AvailableModels.values.map((AvailableModels model) {
-                      return DropdownMenuItem(
-                        value: model.toString(),
-                        child: Text(
-                          model.toString(),
-                          softWrap: true,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      );
-                    }).toList(),
-                  ),
                 ),
               ),
             ],
@@ -143,13 +87,6 @@ class SettingsScreenState extends State<SettingsScreen> {
   }
 
   void _setSetting<T>(BuildContext context, Property property, T value) async {
-    await Settings.from<MainSettings>(context)
-        .update(property.copyWith(defaultValue: value));
-    setState(() {});
-  }
-
-  void _setEnumSetting<T extends Enum>(
-      BuildContext context, EnumProperty<T> property, T value) async {
     await Settings.from<MainSettings>(context)
         .update(property.copyWith(defaultValue: value));
     setState(() {});
