@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "voice-message-backend"
+version = "0.1.0"
+description = ""
+authors = ["nahu02 <nahu1002@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.13"
+fastapi = "^0.115.7"
+uvicorn = "^0.34.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+
+[tool.poetry.scripts]
+start = "voice_message_backend.main:main"
