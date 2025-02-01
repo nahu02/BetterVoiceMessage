@@ -18,7 +18,7 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-          
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 
@@ -29,5 +29,6 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: ./voice_message_backend
+          file: ./voice_message_backend/Dockerfile
           push: true
           tags: ghcr.io/nahu02/bettervoicemessage-backend:latest
