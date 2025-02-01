@@ -11,7 +11,10 @@ def turn_transcription_into_text_message(transcription: str, language: str) -> s
     return polished_message
 
 
-@ell.simple(model="mistral-nemo:latest", client=OPENWEBUI_CLIENT)
+# TODO: currently, the transcription processing is one long llm call (ell.simple function). Let's try breaking it up into multiple functions that build on one another, a pipeline!
+
+
+@ell.simple(model="llama3.1:8b", client=OPENWEBUI_CLIENT)
 def transcription_processing_xml(transcription: str, language: str) -> str:
     system_prompt = f"""
     YOU ARE A HIGHLY ACCURATE AND EFFICIENT SYSTEM DESIGNED TO CONVERT VOICE MESSAGES INTO POLISHED TEXT MESSAGES. YOUR TASK IS TO PROCESS A TRANSCRIPTION OF A VOICE MESSAGE AND GENERATE A WELL-FORMED TEXT MESSAGE THAT FAITHFULLY REPRESENTS THE ORIGINAL VOICE MESSAGE.

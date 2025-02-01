@@ -195,4 +195,5 @@ pyrightconfig.json
 # End of https://www.toptal.com/developers/gitignore/api/visualstudiocode,python
 
 
+# Ignore ELL generated files
 ell_store/
