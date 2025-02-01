@@ -23,6 +23,6 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           context: ./voice_message_backend
-          file: Dockerfile
+          file: voice_message_backend/Dockerfile
           push: true
           tags: ghcr.io/nahu02/bettervoicemessage-backend:latest
