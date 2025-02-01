@@ -19,5 +19,8 @@ jobs:
           password: '${{ secrets.GITHUB_TOKEN }}'
       - name: Build the Docker image
         run: |
+          pwd
+          ls
+          ls voice_message_backend
           docker build ./voice_message_backend -f voice_message_backend/Dockerfile --tag ghcr.io/nahu02/bettervoicemessage-backend:latest
           docker push ghcr.io/nahu02/bettervoicemessage-backend:latest
