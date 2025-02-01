@@ -22,7 +22,7 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v4
         with:
-          context: .
-          file: ./voice_message_backend/Dockerfile
+          context: ./voice_message_backend
+          file: Dockerfile
           push: true
           tags: ghcr.io/nahu02/bettervoicemessage-backend:latest
