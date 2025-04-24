@@ -2,8 +2,7 @@ import re
 
 import ell
 
-from voice_message_backend.ai.clients import OPENWEBUI_CLIENT
-
+from voice_message_backend.ai.clients import PERPLEXITY_CLIENT
 
 def turn_transcription_into_text_message(transcription: str, language: str) -> str:
     xml = str(transcription_processing_xml(transcription, language))
@@ -14,7 +13,7 @@ def turn_transcription_into_text_message(transcription: str, language: str) -> s
 # TODO: currently, the transcription processing is one long llm call (ell.simple function). Let's try breaking it up into multiple functions that build on one another, a pipeline!
 
 
-@ell.simple(model="llama3.1:8b", client=OPENWEBUI_CLIENT)
+@ell.simple(model="r1-1776", client=PERPLEXITY_CLIENT)
 def transcription_processing_xml(transcription: str, language: str) -> str:
     system_prompt = f"""
     YOU ARE A HIGHLY ACCURATE AND EFFICIENT SYSTEM DESIGNED TO CONVERT VOICE MESSAGES INTO POLISHED TEXT MESSAGES. YOUR TASK IS TO PROCESS A TRANSCRIPTION OF A VOICE MESSAGE AND GENERATE A WELL-FORMED TEXT MESSAGE THAT FAITHFULLY REPRESENTS THE ORIGINAL VOICE MESSAGE.
